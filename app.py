@@ -9,6 +9,7 @@ exporteren naar CSV/JSON/Markdown.
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import List
@@ -45,6 +46,38 @@ def get_config():
 
 
 CONFIG = get_config()
+
+
+# ----------------------------------------------------------------- toegangscode
+def require_access() -> None:
+    """Toon een inlogscherm als er een APP_PASSWORD is ingesteld.
+
+    Zonder APP_PASSWORD (bv. lokaal) is de app vrij toegankelijk. De code wordt
+    server-side vergeleken en staat alleen in de secrets, niet in de broncode.
+    """
+    expected = os.getenv("APP_PASSWORD")
+    if not expected:
+        return
+    if st.session_state.get("_auth_ok"):
+        return
+
+    render_header([("Toegang", "vereist")])
+    st.markdown(
+        "<div style='max-width:420px'>Deze tool is afgeschermd. Voer de "
+        "toegangscode in om verder te gaan.</div>",
+        unsafe_allow_html=True,
+    )
+    pw = st.text_input("Toegangscode", type="password", key="_pw")
+    if st.button("Inloggen", type="primary"):
+        if pw == expected:
+            st.session_state["_auth_ok"] = True
+            st.rerun()
+        else:
+            st.error("Onjuiste toegangscode.")
+    st.stop()
+
+
+require_access()
 
 
 # --------------------------------------------------------------------- helpers
