@@ -1,0 +1,19 @@
+# Geheimen — NOOIT committen
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Data & output (lokaal)
+data/*.db
+exports/*/
+logs/*.log
+
+# OS
+.DS_Store
