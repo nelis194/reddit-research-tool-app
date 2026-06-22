@@ -61,6 +61,14 @@ def require_access() -> None:
     if st.session_state.get("_auth_ok"):
         return
 
+    # Teken óók op het inlogscherm een zijbalk, zodat die uitgeklapt blijft
+    # nadat de gebruiker inlogt (anders start de zijbalk dichtgeklapt).
+    st.sidebar.markdown(
+        '<div class="rr-side-title">Reddit Research</div>'
+        '<div class="rr-side-sub">Log in om de tool te gebruiken.</div>',
+        unsafe_allow_html=True,
+    )
+
     render_header([("Toegang", "vereist")])
     st.markdown(
         "<div style='max-width:420px'>Deze tool is afgeschermd. Voer de "
