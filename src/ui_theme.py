@@ -77,14 +77,22 @@ button[data-baseweb="tab"][aria-selected="true"] { color:var(--rr-primary); }
 /* Sidebar */
 [data-testid="stSidebar"] { border-right:1px solid var(--rr-border); }
 
-/* Open-knop van de zijbalk (zichtbaar als de balk dicht is / op mobiel) */
-[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {
-  background:var(--rr-primary); border-radius:10px; padding:3px;
-  box-shadow:0 2px 10px rgba(30,64,175,.35);
+/* 1) Open-knop (als de zijbalk tóch dicht staat) felblauw en onmisbaar maken. */
+[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"],
+button[aria-label="Open sidebar"], button[title="Open sidebar"] {
+  background:var(--rr-primary) !important; border-radius:10px !important;
+  box-shadow:0 2px 12px rgba(30,64,175,.45) !important; z-index:1000 !important;
 }
 [data-testid="stSidebarCollapsedControl"] svg, [data-testid="collapsedControl"] svg,
-[data-testid="stSidebarCollapsedControl"] button, [data-testid="collapsedControl"] button {
+button[aria-label="Open sidebar"] svg, button[title="Open sidebar"] svg {
   color:#fff !important; fill:#fff !important;
+}
+
+/* 2) Op desktop: zijbalk NIET inklapbaar — kan zo nooit kwijtraken. */
+@media (min-width: 769px) {
+  button[aria-label="Close sidebar"], button[title="Close sidebar"],
+  [data-testid="stSidebarCollapseButton"] { display:none !important; }
+  section[data-testid="stSidebar"] { visibility:visible !important; }
 }
 .rr-side-title { font-size:1.05rem; font-weight:700; color:var(--rr-ink); display:flex; align-items:center; gap:8px; }
 .rr-side-sub { font-size:.8rem; color:var(--rr-muted); margin:2px 0 6px; }
