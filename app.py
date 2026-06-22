@@ -342,6 +342,16 @@ render_header(
     ]
 )
 
+st.markdown(
+    '<div style="background:#EFF4FF;border:1px solid #DBE4FF;border-radius:10px;'
+    'padding:10px 14px;margin:0 0 18px;color:#1E3A8A;font-size:.9rem;">'
+    'Gebruik het <b>zoekpaneel links</b> om je zoekwoorden in te vullen en op '
+    '<b>Scrape starten</b> te klikken. Zie je het paneel niet? Tik op het '
+    '<b>»-pijltje linksboven</b> om het te openen (vooral op mobiel of een smal scherm).'
+    "</div>",
+    unsafe_allow_html=True,
+)
+
 analysis: AnalysisResult = st.session_state.get("analysis")
 
 if analysis and analysis.is_medical and analysis.disclaimer:

@@ -76,6 +76,16 @@ button[data-baseweb="tab"][aria-selected="true"] { color:var(--rr-primary); }
 
 /* Sidebar */
 [data-testid="stSidebar"] { border-right:1px solid var(--rr-border); }
+
+/* Open-knop van de zijbalk (zichtbaar als de balk dicht is / op mobiel) */
+[data-testid="stSidebarCollapsedControl"], [data-testid="collapsedControl"] {
+  background:var(--rr-primary); border-radius:10px; padding:3px;
+  box-shadow:0 2px 10px rgba(30,64,175,.35);
+}
+[data-testid="stSidebarCollapsedControl"] svg, [data-testid="collapsedControl"] svg,
+[data-testid="stSidebarCollapsedControl"] button, [data-testid="collapsedControl"] button {
+  color:#fff !important; fill:#fff !important;
+}
 .rr-side-title { font-size:1.05rem; font-weight:700; color:var(--rr-ink); display:flex; align-items:center; gap:8px; }
 .rr-side-sub { font-size:.8rem; color:var(--rr-muted); margin:2px 0 6px; }
 
