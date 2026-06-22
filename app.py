@@ -61,14 +61,6 @@ def require_access() -> None:
     if st.session_state.get("_auth_ok"):
         return
 
-    # Teken óók op het inlogscherm een zijbalk, zodat die uitgeklapt blijft
-    # nadat de gebruiker inlogt (anders start de zijbalk dichtgeklapt).
-    st.sidebar.markdown(
-        '<div class="rr-side-title">Reddit Research</div>'
-        '<div class="rr-side-sub">Log in om de tool te gebruiken.</div>',
-        unsafe_allow_html=True,
-    )
-
     render_header([("Toegang", "vereist")])
     st.markdown(
         "<div style='max-width:420px'>Deze tool is afgeschermd. Voer de "
@@ -126,14 +118,16 @@ def _posts_dataframe() -> pd.DataFrame:
 
 _init_state()
 
-# ------------------------------------------------------------------- sidebar
-st.sidebar.markdown(
-    '<div class="rr-side-title">Zoekopdracht</div>'
-    '<div class="rr-side-sub">Vul één of meer keywords in en start de research.</div>',
-    unsafe_allow_html=True,
+# --------------------------------------------------------- header + zoekpaneel
+render_header(
+    [
+        ("Bron", CONFIG.data_source_label),
+        ("LLM", CONFIG.active_llm_label),
+        ("Database", "Supabase" if CONFIG.uses_postgres else "SQLite"),
+    ]
 )
 
-with st.sidebar:
+with st.expander("Zoekopdracht — vul hier je zoekwoorden in en start", expanded=True):
     keywords_raw = st.text_area(
         "Keywords / onderwerpen / concurrenten",
         placeholder='"cocoa" AND "blood pressure"\n"dark chocolate" AND "heart health"\n"epicatechin" AND "cacao"',
@@ -143,45 +137,51 @@ with st.sidebar:
             "AND / OR / NOT (hoofdletters) om te combineren. Gebruik géén komma's binnen "
             "een zoekopdracht — die splitsen 'm op."
         ),
-        height=140,
-    )
-    subreddits_raw = st.text_input(
-        "Subreddits (optioneel)",
-        placeholder="skincareaddiction, supplements",
-        help="Leeg = heel Reddit. Anders komma-gescheiden subreddits.",
-    )
-    competitor_raw = st.text_input(
-        "Concurrent-termen (optioneel)",
-        placeholder="brand A, brand B",
-        help="Worden geteld als 'mentioned competitors'.",
+        height=120,
     )
 
-    col_a, col_b = st.columns(2)
-    with col_a:
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        subreddits_raw = st.text_input(
+            "Subreddits (optioneel)",
+            placeholder="skincareaddiction, supplements",
+            help="Leeg = heel Reddit. Anders komma-gescheiden subreddits.",
+        )
+    with c2:
+        competitor_raw = st.text_input(
+            "Concurrent-termen (optioneel)",
+            placeholder="brand A, brand B",
+            help="Worden geteld als 'mentioned competitors'.",
+        )
+    with c3:
+        target_lang = st.selectbox(
+            "Taalfilter", ["(geen)", "en", "nl", "de", "fr", "es"], index=0
+        )
+
+    c4, c5, c6, c7 = st.columns(4)
+    with c4:
         sort = st.selectbox(
             "Sortering", ["relevance", "hot", "top", "new", "comments"], index=0
         )
-    with col_b:
+    with c5:
         time_filter = st.selectbox(
             "Periode", ["all", "day", "week", "month", "year"], index=0
         )
+    with c6:
+        max_posts = st.slider("Max posts per zoekterm", 10, 500, min(100, CONFIG.max_posts_per_query), 10)
+    with c7:
+        max_comments = st.slider("Max comments per post", 0, 500, min(100, CONFIG.max_comments_per_post), 10)
 
-    max_posts = st.slider("Max posts per zoekterm", 10, 500, min(100, CONFIG.max_posts_per_query), 10)
-    max_comments = st.slider("Max comments per post", 0, 500, min(100, CONFIG.max_comments_per_post), 10)
-    target_lang = st.selectbox(
-        "Taalfilter", ["(geen)", "en", "nl", "de", "fr", "es"], index=0
-    )
-
-    st.divider()
     if CONFIG.dry_run:
         st.warning("DRY_RUN actief — geen echte HTTP-verzoeken.")
 
-    scrape_clicked = st.button("Scrape starten", type="primary", use_container_width=True)
-    analyze_clicked = st.button("Analyseren", use_container_width=True)
-    load_clicked = st.button(
+    b1, b2, b3 = st.columns(3)
+    scrape_clicked = b1.button("Scrape starten", type="primary", use_container_width=True)
+    analyze_clicked = b2.button("Analyseren", use_container_width=True)
+    load_clicked = b3.button(
         "Laad opgeslagen scrape",
         use_container_width=True,
-        help="Haal je laatste scrape uit Supabase — handig om opnieuw te analyseren zonder opnieuw te scrapen.",
+        help="Haal je laatste scrape uit Supabase — opnieuw analyseren zonder opnieuw te scrapen.",
     )
 
 
@@ -341,25 +341,7 @@ if load_clicked:
     load_from_db()
 
 
-# --------------------------------------------------------------------- main UI
-render_header(
-    [
-        ("Bron", CONFIG.data_source_label),
-        ("LLM", CONFIG.active_llm_label),
-        ("Database", "Supabase" if CONFIG.uses_postgres else "SQLite"),
-    ]
-)
-
-st.markdown(
-    '<div style="background:#EFF4FF;border:1px solid #DBE4FF;border-radius:10px;'
-    'padding:10px 14px;margin:0 0 18px;color:#1E3A8A;font-size:.9rem;">'
-    'Gebruik het <b>zoekpaneel links</b> om je zoekwoorden in te vullen en op '
-    '<b>Scrape starten</b> te klikken. Zie je het paneel niet? Tik op het '
-    '<b>»-pijltje linksboven</b> om het te openen (vooral op mobiel of een smal scherm).'
-    "</div>",
-    unsafe_allow_html=True,
-)
-
+# --------------------------------------------------------------------- resultaten
 analysis: AnalysisResult = st.session_state.get("analysis")
 
 if analysis and analysis.is_medical and analysis.disclaimer:
@@ -409,7 +391,7 @@ with tabs[0]:
         st.caption(f"{len(view)} posts")
         st.dataframe(view, use_container_width=True, height=320)
     else:
-        st.info("Nog geen posts. Gebruik **Scrape** in de zijbalk.")
+        st.info("Nog geen posts. Vul hierboven je zoekwoorden in en klik op **Scrape starten**.")
 
     st.subheader("Comments")
     if not df.empty:
