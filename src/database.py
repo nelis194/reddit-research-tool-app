@@ -278,6 +278,22 @@ class Database:
             row = cur.fetchone()
             return int(row[0]) if row else None
 
+    def latest_search_meta(self) -> Optional[Dict[str, Any]]:
+        """Metadata van de meest recente zoekopdracht (id, keywords, datum, tellingen)."""
+        with self.cursor() as cur:
+            cur.execute(
+                "SELECT id, keywords, num_posts, num_comments, created_at "
+                "FROM searches ORDER BY id DESC LIMIT 1"
+            )
+            row = cur.fetchone()
+            if not row:
+                return None
+            return {
+                "id": int(row[0]), "keywords": row[1],
+                "num_posts": row[2], "num_comments": row[3],
+                "created_at": str(row[4]),
+            }
+
     def fetch_posts(self, search_id: Optional[int] = None) -> List[Dict[str, Any]]:
         return self._fetch("posts", search_id)
 

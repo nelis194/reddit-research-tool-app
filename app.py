@@ -221,6 +221,18 @@ def run_scrape() -> None:
     posts = clean_posts(result.posts, target_language=lang)
     cleaned = clean_comments(result.comments, target_language=lang)
 
+    # 0 resultaten? Meestal blokkeert Reddit de server (datacenter-IP). Overschrijf
+    # dan NIET de bestaande data, en leg duidelijk uit wat er speelt.
+    if not posts and not cleaned:
+        progress_bar.progress(1.0, text="Klaar")
+        status.error(
+            "Reddit gaf **0 resultaten** terug. Dit gebeurt vrijwel altijd als de "
+            "scrape **online (op de server)** draait — Reddit blokkeert datacenter-IP's. "
+            "Draai deze zoekopdracht **lokaal** (op je eigen Mac werkt het wél), of stap "
+            "over op de officiële Reddit API. Je eerdere data is niet gewijzigd."
+        )
+        return
+
     st.session_state["posts"] = posts
     st.session_state["raw_comments"] = result.comments
     st.session_state["cleaned_comments"] = cleaned
@@ -308,11 +320,12 @@ def load_from_db() -> None:
     try:
         db = Database(CONFIG)
         db.init_db()
-        sid = db.latest_search_id()
-        if not sid:
+        meta = db.latest_search_meta()
+        if not meta:
             st.warning("Geen opgeslagen scrape gevonden in de database.")
             db.close()
             return
+        sid = meta["id"]
         prows = db.fetch_posts(sid)
         crows = db.fetch_comments(sid)
         db.close()
@@ -327,9 +340,11 @@ def load_from_db() -> None:
     st.session_state["cleaned_comments"] = comments  # waren al opgeschoond bij opslaan
     st.session_state["analysis"] = None
     st.session_state["scraped"] = True
+    kw = str(meta.get("keywords") or "")[:70]
+    datum = str(meta.get("created_at") or "")[:19].replace("T", " ")
     st.success(
-        f"Geladen uit Supabase: {len(posts)} posts en {len(comments)} comments. "
-        "Klik nu op **Analyseren**."
+        f"Geladen uit Supabase — zoekopdracht van **{datum}**: {len(posts)} posts, "
+        f"{len(comments)} comments.\n\nZoekwoorden: _{kw}_\n\nKlik nu op **Analyseren**."
     )
 
 
